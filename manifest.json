@@ -1,7 +1,6 @@
 {
   "name": "Rohini TransLink Logistics",
   "short_name": "RTL Pune",
-  "description": "Transport Management System for Rohini TransLink",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1877f2",
