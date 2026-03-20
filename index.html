@@ -97,6 +97,30 @@
     </style>
 </head>
 <body>
+    <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#1877f2; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:99999; transition: opacity 0.5s ease;">
+  <img src="Rohini Translink_20251204_181424_0000.png" style="width:180px; height:auto; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.3); margin-bottom:25px;">
+  
+  <h2 style="color:white; font-family:sans-serif; letter-spacing:1px;">Rohini TransLink</h2>
+  
+  <div style="width:35px; height:35px; border:4px solid rgba(255,255,255,0.3); border-top:4px solid #fff; border-radius:50%; animation: rtl-spin 0.8s linear infinite;"></div>
+</div>
+
+<style>
+  @keyframes rtl-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+
+<script>
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const splash = document.getElementById('splash-screen');
+      if(splash){
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.display = 'none', 500);
+      }
+    }, 2500); // 2.5 second ke liye loading dikhegi
+  });
+</script>
+    
     <div class="menu-overlay" id="menuOverlay" onclick="window.closeNav()"></div>
     
     <div class="sidebar" id="mySidebar">
