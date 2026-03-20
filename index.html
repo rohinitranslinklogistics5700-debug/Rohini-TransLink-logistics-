@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rohini TransLink - Ultimate Master</title>
+    <style>
+        /* ================= GLOBAL & LAYOUT ================= */
+        :root { --primary: #007bff; --dark-bg: #0f141e; --sidebar-item: #d1d5db; --card-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; color: #333; overflow-x: hidden; }
+        * { box-sizing: border-box; }
+
+        /* SIDEBAR STYLES */
+        .sidebar { width: 285px; height: 100vh; background-color: var(--dark-bg); color: var(--sidebar-item); display: flex; flex-direction: column; position: fixed; top: 0; left: -300px; z-index: 2000; transition: left 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.5); overflow-y: auto;}
+        .sidebar.open { left: 0; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1500; display: none; }
+        .sidebar-header { padding: 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #1f2937; position: sticky; top:0; background: var(--dark-bg); z-index: 5;}
+        .logo-img { width: 40px; height: 40px; background: white; padding: 2px; border-radius: 4px; object-fit: contain; }
+        .brand-text { font-size: 13px; font-weight: bold; color: white; line-height: 1.3; text-transform: uppercase; }
+        .category-title { font-size: 11px; color: #9ca3af; padding: 25px 20px 8px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: bold; }
+        .menu-item { padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .menu-item:hover, .menu-item.active { background-color: #1f2937; color: white; }
+        .sub-menu { display: none; background-color: #0b0f16; }
+        .sub-item { padding: 10px 20px 10px 50px; color: var(--sidebar-item); font-size: 13.5px; cursor: pointer; display: block; text-decoration: none; }
+        .sub-item:hover { color: var(--primary); }
+        .arrow { font-size: 10px; transition: 0.3s; color: #888; }
+        .rotate { transform: rotate(180deg); }
+        .sidebar-footer { background-color: #000; padding: 15px; text-align: center; border-top: 1px solid #1f2937; }
+
+        /* TOP BAR */
+        .top-bar { background-color: var(--primary); color: white; padding: 12px 15px; display: flex; align-items: center; border-radius: 4px; margin: 10px; box-shadow: var(--card-shadow); }
+        .top-bar h1 { margin: 0; font-size: 13px; flex-grow: 1; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .menu-btn { font-size: 24px; cursor: pointer; }
+        .top-logo { width: 30px; height: 30px; margin: 0 8px; object-fit: contain; }
+
+        /* MODULES & DASHBOARD */
+        .module-section { display: none; padding: 10px; max-width: 800px; margin: auto; }
+        .module-section.active { display: block; }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: var(--card-shadow); border-left: 5px solid; min-height: 100px; display: flex; flex-direction: column; justify-content: center; }
+        .card h3 { margin: 0; font-size: 10px; color: #666; text-transform: uppercase; font-weight: bold; }
+        .card .count { margin: 12px 0 0; font-size: 22px; font-weight: bold; color: #222; }
+        .card-blue { border-left-color: #007bff; } .card-green { border-left-color: #28a745; }
+        .card-orange { border-left-color: #fd7e14; } .card-purple { border-left-color: #6f42c1; }
+        .section-card { background: white; border-radius: 12px; padding: 20px; box-shadow: var(--card-shadow); margin-bottom: 15px; border: 1px solid #eee; }
+        .section-title { font-size: 14px; font-weight: bold; color: darkblue; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .stock-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f8f9fa; cursor: pointer; }
+        .progress-container { width: 80px; height: 10px; background: #f0f2f5; border-radius: 10px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--primary); border-radius: 10px; }
+        .val-display { font-size: 28px; font-weight: bold; color: #333; margin-top: 10px; }
+        .filter-bar { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 15px; justify-content: center; }
+        .filter-btn { padding: 6px 12px; border: 1px solid #ddd; border-radius: 20px; font-size: 10px; font-weight: bold; cursor: pointer; background: white; white-space: nowrap; }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .pie-container { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
+        .pie-circle { width: 140px; height: 140px; border-radius: 50%; background: #eee; margin-bottom: 20px; border: 1px solid #ddd; }
+        .legend { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; }
+        
+        /* CUSTOMER ENQUIRY */
+        .ce-card { background: white; border-radius: 4px; border: 1px solid #1a233a; overflow: hidden; margin-bottom: 20px; box-shadow: var(--card-shadow); }
+        .ce-card-header { background: #1a233a; color: white; padding: 12px 15px; font-size: 14px; font-weight: 500; }
+        .ce-card-body { padding: 15px; border-bottom: 1px solid #eee; }
+        .ce-form-group { margin-bottom: 15px; }
+        .ce-form-label { display: block; font-size: 13px; font-weight: bold; color: #222; margin-bottom: 5px; }
+        .ce-form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        .ce-btn-primary { background: #1877f2; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .ce-inline-form { display: flex; gap: 10px; padding: 15px; background: #f8f9fa;}
+        .ce-table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 13px; }
+        .ce-table th, .ce-table td { border: 1px solid #ddd; padding: 12px 10px; text-align: left; }
+        .ce-table th { background: #f8f9fa; font-weight: bold; }
+        .ce-pagination { display: flex; justify-content: space-between; padding: 10px 15px; border-top: 1px solid #ddd; font-size: 12px; }
+
+        /* ================= ADD BILTY SPECIFIC STYLES ================= */
+        .ab-wrapper { border: 1px solid #283593; background: white; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
+        .ab-header { background: #1a233a; color: white; padding: 10px 15px; font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .ab-radio-group { display: flex; gap: 10px; font-weight: normal; font-size: 12px;}
+        .ab-body { padding: 15px; }
+        .ab-group { margin-bottom: 10px; }
+        .ab-label { display: block; font-size: 12px; font-weight: bold; color: #283593; margin-bottom: 3px; }
+        .ab-control { width: 100%; padding: 8px; border: 1px solid #c5cae9; border-radius: 4px; font-size: 13px; box-sizing: border-box; }
+        .ab-bg-green { background-color: #d4edda; border-color: #c3e6cb; } 
+        .ab-text-red { color: #d32f2f; font-weight: bold; font-size: 18px; border: none; padding: 0; background: transparent;}
+        .ab-heading { font-size: 16px; font-weight: bold; color: #1a233a; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 15px; margin-bottom: 10px; }
+        .ab-table-wrap { overflow-x: auto; margin-bottom: 15px; }
+        .ab-table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        .ab-table th { font-size: 10px; color: #1877f2; text-align: left; padding: 2px; }
+        .ab-table td { padding: 2px; }
+        .ab-check-group { display: flex; gap: 15px; justify-content: center; margin: 15px 0; font-size: 12px; color: #1877f2; font-weight: bold;}
+        .ab-btn-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;}
+        .ab-btn { padding: 8px 25px; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; color: white;}
+        .ab-action { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; align-items: flex-start;}
+    </style>
+</head>
+<body>
+    <div class="menu-overlay" id="menuOverlay" onclick="window.closeNav()"></div>
+    
+    <div class="sidebar" id="mySidebar">
+        <div class="sidebar-header">
+            <img src="truck.png" class="logo-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/713/713311.png'">
+            <div class="brand-text">ROHINI TRANSLINK<br>LOGISTICS</div>
+        </div>
+        <div class="menu-content">
+            <div class="menu-item active" onclick="window.switchModule('moduleDashboard', this)"><span>⊞ Dashboard</span></div>
+            <div class="menu-item" onclick="window.switchModule('moduleEnquiry', this)"><span>🎧 Customer Enquiry</span></div>
+            
+            <div class="category-title">BILTY & MEMO</div>
+            <div class="menu-item" onclick="window.toggleTree('biltyMenu', 'bArr')"><span>🗂️ Bilty</span><span class="arrow" id="bArr">▼</span></div>
+            <div class="sub-menu" id="biltyMenu">
+                <div class="sub-item" onclick="window.switchModule('moduleAddBilty', document.getElementById('bArr').parentElement)">• Add Bilty</div>
+                <div class="sub-item">• Biltie Reports</div>
+            </div>
+            
+            <div class="menu-item" onclick="window.toggleTree('memoMenu', 'mArr')"><span>🧾 Memo</span><span class="arrow" id="mArr">▼</span></div>
+            <div class="sub-menu" id="memoMenu"><div class="sub-item">• Loading Planning</div><div class="sub-item">• Planning Report</div><div class="sub-item">• Create Memo</div><div class="sub-item">• Bulk Print</div></div>
+            
+            <div class="menu-item" onclick="window.toggleTree('ewayMenu', 'eArr')"><span>🔄 E WAY BILLS</span><span class="arrow" id="eArr">▼</span></div>
+            <div class="sub-menu" id="ewayMenu"><div class="sub-item">• Consolidated EWB</div></div>
+            <div class="menu-item"><span>🏪 Stock In</span></div>
+
+            <div class="category-title">REPORTS</div>
+            <div class="menu-item" onclick="window.toggleTree('podMenu', 'pArr')"><span>💬 POD MANAGEMENT</span><span class="arrow" id="pArr">▼</span></div>
+            <div class="sub-menu" id="podMenu"><div class="sub-item">• CREATE POD ST.</div><div class="sub-item">• POD St. Reports</div></div>
+            
+            <div class="menu-item" onclick="window.toggleTree('paidMenu', 'pdArr')"><span>📄 Paid Reports</span><span class="arrow" id="pdArr">▼</span></div>
+            <div class="sub-menu" id="paidMenu"><div class="sub-item">• Paid Dashboard</div><div class="sub-item">• Paid Receipt</div></div>
+
+            <div class="category-title">MASTER</div>
+            <div class="menu-item" onclick="window.toggleTree('masterMenu', 'msArr')"><span>📋 Masters</span><span class="arrow" id="msArr">▼</span></div>
+            <div class="sub-menu" id="masterMenu"><div class="sub-item">• City</div><div class="sub-item">• Consignor</div><div class="sub-item">• Route</div><div class="sub-item">• Driver</div><div class="sub-item">• Vehicle</div></div>
+
+            <div class="category-title" style="color:#ff4d4d; border-top:1px solid #1f2937; margin-top:10px; padding-top:10px;">🔒 OWNER ONLY</div>
+            <div class="menu-item" onclick="window.checkAdmin()" style="color:#fca5a5;"><span>💼 Master Hisaab (A/C)</span></div>
+        </div>
+        <div class="sidebar-footer"><span style="color:#ff4d4d; font-size:12px; font-weight:bold;">OFFICE : URULI DEVACHI</span><br><span style="color:white; font-size:11px;">Tushar Saruk: 9168575777</span></div>
+    </div>
+
+    <div class="main-wrapper">
+        <div class="top-bar">
+            <span class="menu-btn" onclick="window.openNav()">&#9776;</span>
+            <img src="truck.png" class="top-logo" onerror="this.style.display='none'">
+            <h1 id="pageTitle">ROHINI TRANSLINK LOGISTICS DASHBOARD</h1>
+        </div>
+
+        <div id="moduleDashboard" class="module-section active">
+            <div class="summary-grid">
+                <div class="card card-blue"><h3>TODAY'S BILTIES</h3><p class="count">0</p></div>
+                <div class="card card-green"><h3>TODAY REVENUE</h3><p class="count">₹ 0</p></div>
+                <div class="card card-orange"><h3>OVERDUE BILTIES</h3><p class="count">0</p></div>
+                <div class="card card-purple"><h3>STOCK GODOWN</h3><p class="count">0</p></div>
+            </div>
+            <div class="section-card">
+                <div class="section-title"><span>Main Cities Stock</span><button id="backBtn" onclick="window.showMainStock()" style="display:none; background:var(--primary); color:white; border:none; padding:4px 10px; border-radius:20px; font-size:10px;">← BACK</button></div>
+                <div id="stockList"></div>
+            </div>
+            <div class="section-card"><div class="section-title"><span>📈 Successfully Delivered</span></div><div class="val-display">0</div></div>
+            <div class="section-card" style="border-left: 5px solid #e74c3c;"><div class="section-title"><span>⭐ Overdue Biltie</span></div><div class="val-display" style="color: #e74c3c;">0</div></div>
+            <div class="section-card">
+                <div class="section-title" style="justify-content: center;">Consignee Wise Loading (Qty)</div>
+                <div class="filter-bar"><button class="filter-btn active">Today</button><button class="filter-btn">Yesterday</button><button class="filter-btn">This Month</button></div>
+                <div class="pie-container"><div class="pie-circle"></div>
+                    <div class="legend"><div><span class="dot" style="background:#007bff"></span> Milton: <b>0</b></div><div><span class="dot" style="background:#28a745"></span> Wellness: <b>0</b></div><div><span class="dot" style="background:#fd7e14"></span> Others: <b>0</b></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="moduleEnquiry" class="module-section">
+            <div class="ce-card">
+                <div class="ce-card-header">Customer Enquiry</div>
+                <div class="ce-card-body">
+                    <div class="ce-form-group"><label class="ce-form-label">Start Date :</label><input type="date" class="ce-form-control" value="2026-03-09"></div>
+                    <div class="ce-form-group"><label class="ce-form-label">End Date :</label><input type="date" class="ce-form-control" value="2026-03-19"></div>
+                    <div class="ce-form-group"><label class="ce-form-label">Branch</label><select class="ce-form-control" disabled><option>URULI DEVACHI</option></select></div>
+                    <div class="ce-form-group"><label class="ce-form-label">Invoice No.</label><input type="text" class="ce-form-control" placeholder="Invoice No."></div>
+                    <div class="ce-form-group"><label class="ce-form-label">LR Status</label><select class="ce-form-control"><option>Select Status</option><option>In Stock</option><option>Delivered</option></select></div>
+                    <button class="ce-btn-primary">Get Report</button>
+                </div>
+                <div class="ce-inline-form"><input type="text" class="ce-form-control" placeholder="LR Number"><button class="ce-btn-primary" style="width:auto; padding:0 20px;">Get</button></div>
+                <div style="overflow-x: auto;">
+                    <table class="ce-table">
+                        <thead><tr><th>LR.NO.</th><th>LR Date</th><th>Booking Branch</th></tr></thead>
+                        <tbody><tr><td colspan="3" style="text-align:center; padding:30px; color:#888;">No Rows To Show</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="moduleAddBilty" class="module-section">
+            <div class="ab-wrapper">
+                <div class="ab-header"><span>Add New Bilty</span><div class="ab-radio-group"><label><input type="radio" name="biltyType" checked> Regular</label><label><input type="radio" name="biltyType"> Manual</label></div></div>
+                <div class="ab-body">
+                    <div class="ab-group"><label class="ab-label">LR Number :</label><input type="text" class="ab-control ab-text-red" placeholder="Auto / Enter LR" readonly></div>
+                    <div class="ab-group"><label class="ab-label">Date :</label><input type="date" class="ab-control"></div>
+                    <div class="ab-group"><label class="ab-label">Consignor :</label><select class="ab-control"><option>Select Consignor</option></select></div>
+                    <div class="ab-group"><label class="ab-label">Mobile No. :</label><input type="text" class="ab-control" placeholder="Mobile"></div>
+                    <div class="ab-group"><label class="ab-label">From. :</label><select class="ab-control"><option>Select City</option></select></div>
+                    <div class="ab-group"><label class="ab-label">Consignee :</label><select class="ab-control"><option>Select Consignee</option></select></div>
+                    <div class="ab-group"><label class="ab-label">Mobile No. :</label><input type="text" class="ab-control" placeholder="Mobile"></div>
+                    <div class="ab-group"><label class="ab-label">To. :</label><select class="ab-control"><option>Select City</option></select></div>
+                    <div class="ab-group"><label class="ab-label">Invoice No. :</label><input type="text" class="ab-control" placeholder="Enter invoice"></div>
+                    <div class="ab-group"><label class="ab-label">Invoice Date :</label><input type="date" class="ab-control ab-bg-green"></div>
+                    <div class="ab-group"><label class="ab-label">Payment :</label><select class="ab-control" style="font-weight:bold;"><option>Pay Type</option><option>Paid</option><option>To Pay</option></select></div>
+                    
+                    <div class="ab-heading">Goods</div>
+                    <div class="ab-table-wrap">
+                        <table class="ab-table">
+                            <tr><th width="5%">#</th><th width="15%">QTY.</th><th width="20%">Package <span style="color:red; cursor:pointer;" onclick="window.addPkg()">➕</span></th><th width="20%">Category</th><th width="20%">W/QTY</th><th width="20%">Weight</th></tr>
+                            <tr><td><b>1</b></td><td><input type="number" class="ab-control" placeholder="0"></td><td><select class="ab-control" id="pkgSelect"><option>Select</option><option>Box</option><option>Drum</option></select></td><td><input type="text" class="ab-control"></td><td><input type="number" class="ab-control" placeholder="0"></td><td><input type="number" class="ab-control" placeholder="0"></td></tr>
+                        </table>
+                    </div>
+
+                    <div class="ab-heading">Cost Head</div>
+                    <div class="ab-group"><label class="ab-label">Freight Charges :</label><input type="number" class="ab-control" placeholder="0"></div>
+                    <div class="ab-group"><label class="ab-label">Hamali :</label><input type="number" class="ab-control" placeholder="0"></div>
+                    <div class="ab-group"><label class="ab-label">Total Freight :</label><input type="number" class="ab-control" placeholder="0" readonly></div>
+                    
+                    <div class="ab-check-group"><label><input type="checkbox" checked> Print Bilty</label><label><input type="checkbox"> Plain Paper</label></div>
+                    <div class="ab-btn-row"><button class="ab-btn" style="background:#1877f2;">💾 Save</button><button class="ab-btn" style="background:#f0ad4e;">Reset</button></div>
+                    
+                    <div class="ab-action">
+                        <input type="text" class="ab-control" placeholder="LR Number">
+                        <button class="ab-btn" style="background:#e0e0e0; color:#333; border:1px solid #ccc;">Get LR For Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+___________________________________________________
+    <script>
+        window.dataModel = {
+            cities: [{id:'p',name:"Pune",count:0,percent:"0%",isFolder:true},{id:'m',name:"Mumbai",count:0,percent:"0%",isFolder:true},{id:'o',name:"Other Cities",count:0,percent:"0%",isFolder:true}],
+            details: {p:[{name:"Hadapsar",count:0,percent:"0%"}],m:[{name:"Bhiwandi",count:0,percent:"0%"}],o:[{name:"Nagpur",count:0,percent:"0%"}]}
+        };
+        window.openNav = function(){ document.getElementById("mySidebar").className = "sidebar open"; document.getElementById("menuOverlay").style.display = "block"; };
+        window.closeNav = function(){ document.getElementById("mySidebar").className = "sidebar"; document.getElementById("menuOverlay").style.display = "none"; };
+        window.toggleTree = function(id, arr){ var m = document.getElementById(id); var a = document.getElementById(arr); if(m.style.display === "block"){ m.style.display = "none"; a.className = "arrow"; }else{ m.style.display = "block"; a.className = "arrow rotate"; } };
+        window.switchModule = function(id, el){
+            var ms = document.getElementsByClassName("module-section"); for(var i=0; i<ms.length; i++) ms[i].className = "module-section";
+            document.getElementById(id).className = "module-section active";
+            var its = document.getElementsByClassName("menu-item"); for(var j=0; j<its.length; j++) its[j].classList.remove("active");
+            if(el) el.classList.add("active");
+            var title = document.getElementById("pageTitle");
+            if(id === 'moduleDashboard') title.innerText = "ROHINI TRANSLINK LOGISTICS DASHBOARD";
+            if(id === 'moduleEnquiry') title.innerText = "CUSTOMER ENQUIRY";
+            if(id === 'moduleAddBilty') title.innerText = "ADD NEW BILTY";
+            window.closeNav();
+        };
+        window.renderStock = function(list, sub){
+            var c = document.getElementById('stockList'); c.innerHTML = ''; document.getElementById('backBtn').style.display = sub ? "block" : "none";
+            for(var i=0; i<list.length; i++){
+                var item = list[i]; var row = document.createElement('div'); row.className = 'stock-row';
+                if(item.isFolder){ (function(id){ row.onclick = function(){ window.renderStock(window.dataModel.details[id], true); }; })(item.id); }
+                row.innerHTML = '<div style="flex:1;">' + (item.isFolder?'📁':'📍') + ' ' + item.name + '</div><div class="progress-container"><div class="progress-bar" style="width:'+item.percent+'"></div></div><div style="font-weight:bold; width:30px; text-align:right;">'+item.count+'</div>';
+                c.appendChild(row);
+            }
+        };
+        window.addPkg = function() { var val = prompt("New Package Type:"); if(val) { var s = document.getElementById("pkgSelect"); var o = document.createElement("option"); o.text = val; s.add(o); s.value = val; } };
+        window.checkAdmin = function(){ if(prompt("Password:") === "admin123") alert("Granted!"); else alert("Denied!"); };
+        window.onload = function(){ window.renderStock(window.dataModel.cities, false); };
+    </script>
+</body>
+</html>
+<script type="module">
+  // 1. Firebase Tools Load Karna
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // 2. Aapki Master Key
+  const firebaseConfig = {
+    apiKey: "AIzaSyCoiDbLlQT9pnmquNEJPLQWLuZiEeUtsYA",
+    authDomain: "rohini-translink-logistics.firebaseapp.com",
+    projectId: "rohini-translink-logistics",
+    storageBucket: "rohini-translink-logistics.firebasestorage.app",
+    messagingSenderId: "1002099332925",
+    appId: "1:1002099332925:web:ac7ef645f24ddc90e35754",
+    measurementId: "G-PCR2RNMWNC"
+  };
+
+  // 3. Engine Start
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 4. ASLI BILTY SAVE KARNE KA FUNCTION
+  window.saveBilty = async function() {
+    const btn = event.target;
+    btn.innerText = "Saving...";
+    btn.disabled = true;
+
+    try {
+        const inputs = document.querySelectorAll('#moduleAddBilty .ab-control');
+        const bData = {
+            lrNumber: document.querySelector('.ab-text-red').value || "AUTO",
+            date: inputs[0].value,
+            consignor: inputs[1].value,
+            from: inputs[2].value,
+            consignee: inputs[3].value,
+            to: inputs[5].value,
+            totalFreight: inputs[10].value,
+            createdAt: serverTimestamp() 
+        };
+
+        // Cloud Database mein save karna
+        await addDoc(collection(db, "biltie_records"), bData);
+        
+        alert("✅ Rohini TransLink: Bilty Cloud par save ho gayi!");
+        window.switchMod('modDash'); // Dashboard par wapas le jayega
+    } catch (e) {
+        alert("❌ Error: " + e.message);
+    } finally {
+        btn.innerText = "💾 Save";
+        btn.disabled = false;
+    }
+  };
+</script>
+<style>
+  /* Screenshot jaisa VIP Design */
+  .vip-wrapper { position: relative; width: 100%; margin-bottom: 10px; }
+  .vip-input { width: 100%; padding-right: 50px !important; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-size: 14px;}
+  .vip-input:focus { border: 2px solid #e74c3c; outline: none; } /* Red border on click */
+  .vip-icons { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #666; font-size: 14px; display: flex; gap: 10px; align-items: center; z-index: 2; }
+  .vip-clear { cursor: pointer; font-weight: bold; }
+  .vip-arrow { font-size: 10px; }
+  .vip-dropdown { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 9999; max-height: 200px; overflow-y: auto; }
+  .vip-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
+  .vip-item:hover { background: #f0f0f0; cursor: pointer; }
+  /* Nayi Party wala Blue button */
+  .vip-add-new { background: #4169E1; color: white; padding: 10px; cursor: pointer; font-size: 14px; } 
+  .vip-add-new:hover { background: #3154b5; }
+</style>
+
+<script>
+setTimeout(function() {
+  // Aapki parties
+  let masterParties = ["Milton", "Wellness", "Rahul Traders", "Amar Hari"];
+
+  let selects = document.querySelectorAll('#moduleAddBilty select.ab-control');
+
+  selects.forEach(function(select) {
+    let oldText = select.options[0].text; 
+
+    let wrapper = document.createElement('div');
+    wrapper.className = 'vip-wrapper';
+
+    let input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'ab-control vip-input';
+    input.placeholder = oldText;
+
+    let icons = document.createElement('div');
+    icons.className = 'vip-icons';
+    let clearBtn = document.createElement('span');
+    clearBtn.className = 'vip-clear';
+    clearBtn.innerHTML = '✕';
+    let arrow = document.createElement('span');
+    arrow.className = 'vip-arrow';
+    arrow.innerHTML = '▲';
+    icons.appendChild(clearBtn);
+    icons.appendChild(arrow);
+
+    let dropdown = document.createElement('div');
+    dropdown.className = 'vip-dropdown';
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(icons);
+    wrapper.appendChild(dropdown);
+    select.replaceWith(wrapper);
+
+    // List update karne ka system
+    function updateList() {
+      let val = input.value.trim().toLowerCase();
+      dropdown.innerHTML = '';
+      let matchCount = 0;
+      let exactMatch = false;
+
+      masterParties.forEach(function(party) {
+        if(party.toLowerCase().includes(val)) {
+          let div = document.createElement('div');
+          div.className = 'vip-item';
+          div.innerText = party;
+          div.onclick = function() { input.value = party; dropdown.style.display = 'none'; };
+          dropdown.appendChild(div);
+          matchCount++;
+          if(party.toLowerCase() === val) exactMatch = true;
+        }
+      });
+
+      // Agar naam list mein nahi hai, toh Screenshot wala Blue Button dikhao
+      if(val !== "" && !exactMatch) {
+         let addNewDiv = document.createElement('div');
+         addNewDiv.className = 'vip-add-new';
+         addNewDiv.innerText = 'Add New Party ----> "' + input.value + '"';
+         addNewDiv.onclick = function() {
+           masterParties.push(input.value); // Nayi party add ho gayi
+           dropdown.style.display = 'none';
+         };
+         dropdown.appendChild(addNewDiv);
+      }
+    }
+
+    input.addEventListener('focus', function() { updateList(); dropdown.style.display = 'block'; });
+    input.addEventListener('input', updateList);
+    clearBtn.addEventListener('click', function() { input.value = ''; updateList(); input.focus(); });
+    
+    // Kahin aur click karo toh list band ho jaye
+    document.addEventListener('click', function(e) {
+      if(!wrapper.contains(e.target)) dropdown.style.display = 'none';
+    });
+  });
+}, 500);
+</script>
+<script>
+  setTimeout(function() {
+    // Ye code apne aap pure page mein 'Save' button dhoondega aur usme engine fit kar dega
+    let saareButtons = document.querySelectorAll('button');
+    saareButtons.forEach(function(btn) {
+      if (btn.innerText.includes('Save') || btn.innerText.includes('SAVE')) {
+        btn.type = 'button'; // Page ko achanak refresh hone se rokega
+        btn.onclick = window.saveBilty; // Asli save function jod dega
+        btn.style.border = "2px solid #00FF00"; // Button par ek halka green border aayega taaki aapko pata chale jadoo chal gaya!
+      }
+    });
+  }, 1000);
+</script>
+<style>
+  /* Blink aur slide animation */
+  @keyframes blinkToast {
+      0% { opacity: 0; top: -50px; }
+      15% { opacity: 1; top: 20px; }
+      85% { opacity: 1; top: 20px; }
+      100% { opacity: 0; top: -50px; }
+  }
+  
+  /* Green Box ka VIP Design */
+  .vip-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #28a745; /* VIP Green Color */
+      color: white;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      z-index: 999999;
+      animation: blinkToast 3s ease-in-out forwards;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.5px;
+  }
+
+  /* Agar koi Error aayi toh Red box dikhayega */
+  .vip-toast.error-toast {
+      background-color: #dc3545; 
+  }
+</style>
+
+<script>
+  // Purane saste alert ko hamesha ke liye VIP Notification mein badalna
+  window.alert = function(msg) {
+      let toast = document.createElement('div');
+      toast.className = 'vip-toast';
+      
+      // Text set karna
+      if (msg.includes('save ho gayi') || msg.includes('Cloud par')) {
+          toast.innerHTML = '✅ Bilty successfully added';
+      } else if (msg.toLowerCase().includes('error')) {
+          toast.className = 'vip-toast error-toast';
+          toast.innerHTML = '❌ ' + msg; // Error aayi toh wahi red box mein dikhayega
+      } else {
+          toast.innerHTML = '🔔 ' + msg;
+      }
+
+      // Screen par dikhana
+      document.body.appendChild(toast);
+
+      // 3 second baad apne aap delete karna taaki kachra jama na ho
+      setTimeout(function() {
+          toast.remove();
+      }, 3000);
+  };
+</script>
+<style>
+  /* Slide Down Animation */
+  @keyframes slideDownFull {
+      0% { top: -100px; opacity: 0; }
+      100% { top: 0; opacity: 1; }
+  }
+  
+  /* Pura Screen Gherne Wala Rectangle Design */
+  .vip-full-width-toast {
+      position: fixed;
+      top: 0; /* Ekdam top par chipka hua */
+      left: 0;
+      width: 100%; /* Puri screen cover karega */
+      background-color: #28a745; /* VIP Green Color */
+      color: white;
+      padding: 18px; /* Thoda mota professional look */
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center; /* Text beech mein aayega */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 9999999; /* Sabse upar dikhega */
+      animation: slideDownFull 0.4s ease-out forwards;
+      cursor: pointer; /* Hath ka nishan dikhayega taaki pata chale click karna he */
+      box-sizing: border-box; /* Padding se width na badhe */
+      letter-spacing: 0.5px;
+  }
+
+  /* Error variation (Red Bar) */
+  .vip-full-width-toast.error-toast {
+      background-color: #dc3545; 
+  }
+</style>
+
+<script>
+  // Purane alert ko VIP Full-Width Bar mein badalna
+  window.alert = function(msg) {
+      // 1. Agar pehle se koi notification he toh use hatao
+      let oldToast = document.querySelector('.vip-full-width-toast');
+      if(oldToast) oldToast.remove();
+
+      // 2. Naya notification banao
+      let toast = document.createElement('div');
+      toast.className = 'vip-full-width-toast';
+      
+      // Text set karna
+      if (msg.includes('save ho gayi') || msg.includes('added') || msg.includes('Cloud par')) {
+          toast.innerHTML = '✅ Bilty successfully added';
+      } else if (msg.toLowerCase().includes('error')) {
+          toast.className = 'vip-full-width-toast error-toast';
+          toast.innerHTML = '❌ ' + msg; 
+      } else {
+          toast.innerHTML = '🔔 ' + msg;
+      }
+
+      // Screen par dikhana
+      document.body.appendChild(toast);
+
+      // Method 1: Touch/Click karne par turant gayab hona
+      toast.onclick = function() {
+          toast.remove();
+          clearTimeout(autoDismissTimer); // Auto-dismiss timer ko band karna
+      };
+
+      // Method 2: 10 second (10000ms) baad apne aap gayab hona
+      let autoDismissTimer = setTimeout(function() {
+          if(toast) {
+              // Halka sa fade-out effect dekar remove karna
+              toast.style.transition = 'opacity 0.5s ease';
+              toast.style.opacity = '0';
+              setTimeout(() => toast.remove(), 500);
+          }
+      }, 10000);
+  };
+</script>
+<script type="module">
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // Engine ko surakshit tarike se dubara connect karna
+  const firebaseConfig = {
+    apiKey: "AIzaSyCoiDbLlQT9pnmquNEJPLQWLuZiEeUtsYA",
+    authDomain: "rohini-translink-logistics.firebaseapp.com",
+    projectId: "rohini-translink-logistics",
+    storageBucket: "rohini-translink-logistics.firebasestorage.app",
+    messagingSenderId: "1002099332925",
+    appId: "1:1002099332925:web:ac7ef645f24ddc90e35754"
+  };
+  
+  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  const db = getFirestore(app);
+
+  // NAYA SMART ENGINE (Jo sahi dabbe se sahi maal uthayega)
+  window.saveBilty = async function() {
+    try {
+        const inputs = document.querySelectorAll('.ab-control');
+        
+        // Database Screenshot ke hisab se sahi Mapping
+        const bData = {
+            date: inputs[1] ? inputs[1].value : "",
+            consignor: inputs[2] ? inputs[2].value : "",
+            consignorMobile: inputs[3] ? inputs[3].value : "",
+            fromCity: inputs[4] ? inputs[4].value : "",
+            consignee: inputs[5] ? inputs[5].value : "",
+            consigneeMobile: inputs[7] ? inputs[7].value : "",
+            toCity: inputs[9] ? inputs[9].value : "",
+            paymentType: inputs[10] ? inputs[10].value : "", // TBB yahan aata hai
+            
+            // Total Freight dhoondne ka smart tarika
+            totalFreight: document.querySelector('input[placeholder="0"]') ? document.querySelector('input[placeholder="0"]').value : "0", 
+            
+            createdAt: serverTimestamp()
+        };
+
+        // Cloud par Save
+        await addDoc(collection(db, "biltie_records"), bData);
+        
+        // Aapka naya VIP Rectangle Notification
+        alert("Bilty successfully added"); 
+        
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
+  };
+</script>
+<script type="module">
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // Engine ko surakshit tarike se chalu karna
+  const firebaseConfig = {
+    apiKey: "AIzaSyCoiDbLlQT9pnmquNEJPLQWLuZiEeUtsYA",
+    authDomain: "rohini-translink-logistics.firebaseapp.com",
+    projectId: "rohini-translink-logistics",
+    storageBucket: "rohini-translink-logistics.firebasestorage.app",
+    messagingSenderId: "1002099332925",
+    appId: "1:1002099332925:web:ac7ef645f24ddc90e35754"
+  };
+  
+  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  const db = getFirestore(app);
+
+  // Asli aur ekdam sateek Data Save Function
+  window.saveBilty = async function() {
+    try {
+        // Screen par jitne bhi text boxes hain, un sabko ek line mein khada karna
+        const inputs = document.querySelectorAll('.ab-control');
+        
+        // Ab dabbon ki ekdam exact mapping (0 se shuru)
+        const bData = {
+            date: inputs[0] ? inputs[0].value : "",
+            consignor: inputs[1] ? inputs[1].value : "",
+            fromCity: inputs[2] ? inputs[2].value : "",
+            consignee: inputs[3] ? inputs[3].value : "",
+            mobile: inputs[4] ? inputs[4].value : "",
+            toCity: inputs[5] ? inputs[5].value : "",
+            paymentType: inputs[8] ? inputs[8].value : "",
+            
+            // Sabse aakhiri dabba Total Freight ka hota hai, chahe kitne bhi item add ho jayein
+            totalFreight: inputs[inputs.length - 1] ? inputs[inputs.length - 1].value : "0", 
+            
+            createdAt: serverTimestamp()
+        };
+
+        // Cloud Godown par bhejna
+        await addDoc(collection(db, "biltie_records"), bData);
+        
+        // Aapka VIP Rectangle Green Notification chalega
+        alert("✅ Bilty successfully added"); 
+        
+    } catch (e) {
+        alert("❌ Error Saving Data: " + e.message);
+    }
+  };
+
+  // Button ko automatically engine se jodna (Taaki achanak page refresh na ho)
+  setTimeout(() => {
+      let buttons = document.querySelectorAll('button');
+      buttons.forEach(btn => {
+          if (btn.innerText.includes('Save') || btn.innerText.includes('SAVE')) {
+              btn.onclick = window.saveBilty;
+              btn.type = 'button';
+          }
+      });
+  }, 1500);
+</script>
+<style>
+  /* Tairta hua VIP Button */
+  .reports-float-btn { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 15px 20px; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 9999; border: 2px solid #fff; cursor: pointer; }
+  
+  /* Pura Screen Gherne wala Table Popup */
+  .reports-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 10000; overflow-y: auto; padding: 15px; box-sizing: border-box; animation: slideUp 0.3s ease-out; }
+  @keyframes slideUp { from { top: 100%; } to { top: 0; } }
+  
+  .reports-header { display: flex; justify-content: space-between; align-items: center; background: #1877f2; color: white; padding: 15px; border-radius: 8px 8px 0 0; margin: -15px -15px 15px -15px; }
+  .reports-close { font-size: 28px; font-weight: bold; cursor: pointer; background: #dc3545; padding: 0 12px; border-radius: 5px; }
+  
+  /* Mast Professional Table */
+  .reports-table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  .reports-table th, .reports-table td { border: 1px solid #e0e0e0; padding: 12px; text-align: left; font-size: 14px; }
+  .reports-table th { background: #1e293b; color: white; text-transform: uppercase; font-size: 12px; }
+  .reports-table tr:nth-child(even) { background-color: #f8f9fa; }
+</style>
+
+<button class="reports-float-btn" onclick="window.openReports()">📊 View Reports</button>
+
+<div id="reportsModal" class="reports-modal">
+  <div class="reports-header">
+    <h3 style="margin:0;">📑 Biltie Reports</h3>
+    <span class="reports-close" onclick="document.getElementById('reportsModal').style.display='none'">✖</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="reports-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Consignor</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Freight</th>
+        </tr>
+      </thead>
+      <tbody id="reportsBody">
+        </tbody>
+    </table>
+  </div>
+</div>
+
+<script type="module">
+  import { getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // Data Mangwane ka Dimaag
+  window.openReports = async function() {
+    // Popup kholo aur Loading dikhao
+    document.getElementById('reportsModal').style.display = 'block';
+    const tbody = document.getElementById('reportsBody');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; font-weight:bold; color:#1877f2;">⏳ Google Cloud se data aa raha hai...</td></tr>';
+
+    try {
+      const db = getFirestore(getApp());
+      const querySnapshot = await getDocs(collection(db, "biltie_records"));
+      
+      if(querySnapshot.empty) {
+         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Abhi tak koi Bilty save nahi hui hai!</td></tr>';
+         return;
+      }
+
+      let html = '';
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        
+        // Data ko table ki line mein set karna
+        html += `<tr>
+          <td><b>${data.date || '-'}</b></td>
+          <td style="color:#1877f2; font-weight:bold;">${data.consignor || '-'}</td>
+          <td>${data.fromCity || '-'}</td>
+          <td>${data.toCity || '-'}</td>
+          <td style="color:green; font-weight:bold;">₹${data.totalFreight || '0'}</td>
+        </tr>`;
+      });
+      
+      // Table mein data chipka do
+      tbody.innerHTML = html;
+
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">❌ Error: ${e.message}</td></tr>`;
+    }
+  };
+</script>
+<style>
+  .stats-container { display: flex; gap: 8px; padding: 10px; margin: 10px 0; }
+  .stat-card { flex: 1; background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 4px solid #1877f2; text-align: center; border-bottom: 1px solid #eee; }
+  .stat-card.money { border-top-color: #28a745; }
+  .stat-label { font-size: 11px; color: #888; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+  .stat-value { font-size: 18px; font-weight: 900; color: #1e293b; }
+</style>
+
+<script type="module">
+  import { getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // Dashboard dhoondhne wala Jadoo (Repeat Mode)
+  let dashFinder = setInterval(() => {
+    // Hamne modDash ID dhoondhi (jo aapke dashboard ki he)
+    const dashMod = document.getElementById('modDash') || document.querySelector('.module-dashboard'); 
+    
+    if (dashMod && !document.getElementById('totalBiltyCount')) {
+      console.log("Dashboard mil gaya! Stats laga rahe hain...");
+      
+      const statsHTML = `
+        <div class="stats-container" id="myVIPStats">
+          <div class="stat-card">
+            <div class="stat-label">📦 Total Bilty</div>
+            <div id="totalBiltyCount" class="stat-value">...</div>
+          </div>
+          <div class="stat-card money">
+            <div class="stat-label">💰 Total Cash</div>
+            <div id="totalFreightAmount" class="stat-value">...</div>
+          </div>
+        </div>
+      `;
+      
+      // Dashboard ke ekdam upar (header ke baad) dalna
+      dashMod.prepend(document.createRange().createContextualFragment(statsHTML));
+      
+      // FIREBASE SE LIVE CONNECT KARNA
+      try {
+        const db = getFirestore(getApp());
+        onSnapshot(collection(db, "biltie_records"), (snapshot) => {
+          let count = snapshot.size;
+          let totalCash = 0;
+          snapshot.forEach((doc) => {
+            totalCash += (parseFloat(doc.data().totalFreight) || 0);
+          });
+          document.getElementById('totalBiltyCount').innerText = count;
+          document.getElementById('totalFreightAmount').innerText = "₹" + totalCash.toLocaleString('en-IN');
+        });
+      } catch(e) { console.error("Firebase Error:", e); }
+
+      clearInterval(dashFinder); // Kaam ho gaya, ab dhoondhna band karo
+    }
+  }, 500); // Har 0.5 second mein check karega
+</script>
