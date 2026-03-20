@@ -1,16 +1,7 @@
-{
-  "name": "Rohini TransLink Logistics",
-  "short_name": "RTL Pune",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#1877f2",
-  "theme_color": "#1877f2",
-  "icons": [
-    {
-      "src": "Rohini Translink_20251204_181424_0000.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
-}
+"icons": [
+  {
+    "src": "logo.png",
+    "sizes": "512x512",
+    "type": "image/png"
+  }
+]
